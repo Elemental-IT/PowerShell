@@ -1,1 +1,169 @@
-.
+<#
+.Synopsis
+A GUI for windows speech synthesizer that can output text to speech and saveto .wav.
+Could be used to for IVR messaging or creating audio books ( with a good voice installed ) 
+
+Author Theo bird ( Bedlem55 )
+#>
+
+# Assembly
+#==========================================
+
+Add-Type -AssemblyName System.speech
+$speak = New-Object System.Speech.Synthesis.SpeechSynthesizer
+
+Add-Type -AssemblyName System.Windows.Forms
+[System.Windows.Forms.Application]::EnableVisualStyles()
+
+
+# Base Form
+#==========================================
+
+$style = "flat"
+$Form = New-Object system.Windows.Forms.Form
+$Form.ClientSize = '798,500'
+$Form.text = "Text to Wave"
+$Form.TopMost = $false
+$Form.BackColor = "DodgerBlue"
+$Form.FormBorderStyle = "FixedSingle"
+$Form.MaximizeBox = $false
+$Form.MinimizeBox = $false
+$Form.ShowIcon = $false
+
+#==========================================
+
+$SpeechGB = New-Object System.Windows.Forms.Panel
+$SpeechGB.height = 500
+$SpeechGB.width = 798
+$SpeechGB.location = New-Object System.Drawing.Point(0,0)
+
+$SpeakTextBox = New-Object system.Windows.Forms.TextBox
+$SpeakTextBox.Text = "Enter text here"
+$SpeakTextBox.multiline = $true
+$SpeakTextBox.width = 775
+$SpeakTextBox.height = 350
+$SpeakTextBox.AllowDrop = $true
+$SpeakTextBox.ScrollBars = "both"
+$SpeakTextBox.AcceptsTab = $true
+$SpeakTextBox.AcceptsReturn = $true
+$SpeakTextBox.BorderStyle = "None"
+$SpeakTextBox.location = New-Object System.Drawing.Point(12, 12)
+$SpeakTextBox.Font = 'Microsoft Sans Serif,10'
+$Form.Controls.Add($SpeakTextBox)
+
+Function PlaySound {
+$speak.SetOutputToDefaultAudioDevice() ; $speak.Speak($SpeakTextBox.Text)
+}
+
+$SpeakButtion = New-Object system.Windows.Forms.Button
+$SpeakButtion.text = "Play"
+$SpeakButtion.width = 127
+$SpeakButtion.height = 45
+$SpeakButtion.BackColor = "Aqua"
+$SpeakButtion.FlatStyle = $style
+$SpeakButtion.FlatAppearance.BorderSize = '0'
+$SpeakButtion.location = New-Object System.Drawing.Point(660, 380)
+$SpeakButtion.Font = 'Microsoft Sans Serif,10'
+$SpeakButtion.add_Click({ PlaySound })
+
+Function SaveSound {
+  $SaveChooser = New-Object -TypeName System.Windows.Forms.SaveFileDialog
+  $SaveChooser.Title = "Save text to Wav file"
+  $SaveChooser.FileName = "SpeechSynthesizer"
+  $SaveChooser.Filter = 'Wave file (.wav) | *.wav'
+  $SaveChooser.ShowDialog()
+  $speak.SetOutputToWaveFile($SaveChooser.Filename)
+  $speak.Speak($SpeakTextBox.Text)
+  $speak.SetOutputToNull()
+  $speak.SpeakAsyncCancelAll()
+}
+
+$SaveButtion = New-Object system.Windows.Forms.Button
+$SaveButtion.text = "Save"
+$SaveButtion.width = 127
+$SaveButtion.height = 45
+$SaveButtion.BackColor = "Aqua"
+$SaveButtion.FlatStyle = $style
+$SaveButtion.FlatAppearance.BorderSize = '0'
+$SaveButtion.location = New-Object System.Drawing.Point(660, 445)
+$SaveButtion.Font = 'Microsoft Sans Serif,10'
+$SaveButtion.add_Click({ SaveSound })
+
+
+# Select Group Box
+#==========================================
+
+$SelectGB = New-Object system.Windows.Forms.Groupbox
+$SelectGB.height = 50
+$SelectGB.width = 640
+$SelectGB.text = "Select Voice"
+$SelectGB.location = New-Object System.Drawing.Point(11, 375)
+
+$SelectVoiceCB = New-Object system.Windows.Forms.ComboBox
+$SelectVoiceCB.Text = $speak.Voice.Name
+$SelectVoiceCB.width = 540
+$SelectVoiceCB.height = 24
+$SelectVoiceCB.FlatStyle = "flat"
+$SelectVoiceCB.DropDownStyle = 'DropDownList'
+$SelectVoiceCB.location = New-Object System.Drawing.Point(11, 15)
+$SelectVoiceCB.Font = 'Microsoft Sans Serif,10'
+$Voices = ($speak.GetInstalledVoices() | ForEach-Object { $_.voiceinfo }).Name
+foreach ($Voice in $Voices) {
+  [void]$SelectVoiceCB.Items.add($voice) 
+}
+$Form.Controls.Add($SelectVoiceCB)
+
+$VoiceSelectButtion = New-Object system.Windows.Forms.Button
+$VoiceSelectButtion.text = "Select"
+$VoiceSelectButtion.width = 78
+$VoiceSelectButtion.height = 24
+$VoiceSelectButtion.BackColor = "Aqua"
+$VoiceSelectButtion.FlatStyle = $style
+$VoiceSelectButtion.FlatAppearance.BorderSize = '0'
+$VoiceSelectButtion.location = New-Object System.Drawing.Point(555, 15)
+$VoiceSelectButtion.Font = 'Microsoft Sans Serif,10'
+$VoiceSelectButtion.add_Click({ $speak.SelectVoice($SelectVoiceCB.Text) })
+
+
+# Speed Group Box
+#==========================================
+
+$SpeedGB = New-Object system.Windows.Forms.Groupbox
+$SpeedGB.height = 50
+$SpeedGB.width = 150
+$SpeedGB.text = "Select Speed"
+$SpeedGB.location = New-Object System.Drawing.Point(11, 440)
+
+$SpeedArray = '10','9','8','7','6','5','4','3','2','1','0','-1','-2','-3','-4','-5','-6','-7','-8','-9','-10'
+
+$SelectSpeedCB = New-Object system.Windows.Forms.ComboBox
+$SelectSpeedCB.Text = '0'
+$SelectSpeedCB.width = 50
+$SelectSpeedCB.height = 24
+$SelectSpeedCB.DropDownStyle = 'DropDownList'
+$SelectSpeedCB.FlatStyle = $style
+$SelectSpeedCB.location = New-Object System.Drawing.Point(11, 15)
+$SelectSpeedCB.Font = 'Microsoft Sans Serif,10'
+ForEach ($Rate in $SpeedArray) { [void]$SelectSpeedCB.Items.add( $Rate ) }
+
+$SpeedSelectButtion = New-Object system.Windows.Forms.Button
+$SpeedSelectButtion.text = "Select"
+$SpeedSelectButtion.width = 78
+$SpeedSelectButtion.height = 24
+$SpeedSelectButtion.BackColor = "Aqua"
+$SpeedSelectButtion.FlatStyle = $style
+$SpeedSelectButtion.FlatAppearance.BorderSize = '0'
+$SpeedSelectButtion.location = New-Object System.Drawing.Point(65, 15)
+$SpeedSelectButtion.Font = 'Microsoft Sans Serif,10'
+$SpeedSelectButtion.add_Click({($Script:Speak.Rate = ($SelectSpeedCB.Text))})
+
+
+# Controls
+#==========================================
+
+$Form.controls.AddRange(@( $SpeechGB ))
+$SpeechGB.controls.AddRange(@($SpeakTextBox, $SpeakButtion, $SaveButtion, $SelectGB, $SpeedGB, $InstallGB ))
+$SelectGB.controls.AddRange(@($SelectVoiceCB, $VoiceSelectButtion, $SpeedIncreaseButtion, $SpeedDecreaseButtion ))
+$SpeedGB.controls.AddRange(@( $SelectSpeedCB,$SpeedSelectButtion ))
+
+[void]$form.ShowDialog()
