@@ -101,7 +101,7 @@ Function Unlock {
 }
                              
                                                                                                                                                                 
-Function Disable {
+Function Disable-Enable {
         
     if ($AccountsCombobox.SelectedItem -eq $null) {
         $OutputTextbox.Clear()
@@ -109,27 +109,105 @@ Function Disable {
     }
     
     Else {
-        Try {
-
-            $userAccount = $AccountsCombobox.Text.ToString()
-            $UserPrompt = new-object -comobject wscript.shell
-            $Answer = $UserPrompt.popup("        Disable $userAccount`?", 0, "Disable Account Prompt", 4)
+        if ((Get-ADUser -Identity $AccountsCombobox.SelectedItem).Enabled -eq $true) { 
+            Try {
             
-            If ($Answer -eq 6) {
-                $OutputTextbox.Clear()
-                Disable-ADAccount -Identity $AccountsCombobox.SelectedItem -ErrorAction Stop
-                $OutputTextbox.AppendText("$userAccount account is now disabled")
-            }
+                $userAccount = $AccountsCombobox.Text.ToString()
+                $UserPrompt = new-object -comobject wscript.shell
+                $Answer = $UserPrompt.popup("        Disable $userAccount`?", 0, "Disable Account Prompt", 4)
+            
+                If ($Answer -eq 6) {
+                    $OutputTextbox.Clear()
+                    Disable-ADAccount -Identity $AccountsCombobox.SelectedItem -ErrorAction Stop
+                    $OutputTextbox.AppendText("$userAccount account is now disabled")
+                }
     
-            Else {
-                $OutputTextbox.Clear()
-                $OutputTextbox.AppendText("Account disabled action canceled") 
-            }
+                Else {
+                    $OutputTextbox.Clear()
+                    $OutputTextbox.AppendText("Account disabled action canceled") 
+                }
     
-        } catch { OutError }
+            } catch { OutError }
+        } else { 
+            Try {
+            
+                $userAccount = $AccountsCombobox.Text.ToString()
+                $UserPrompt = new-object -comobject wscript.shell
+                $Answer = $UserPrompt.popup("        $userAccount is disabled, Enable this account`?", 0, "Enable Account Prompt", 4)
+            
+                If ($Answer -eq 6) {
+                    $OutputTextbox.Clear()
+                    Enable-ADAccount -Identity $AccountsCombobox.SelectedItem -ErrorAction Stop
+                    $OutputTextbox.AppendText("$userAccount account is now Enabled")
+                }
+    
+                Else {
+                    $OutputTextbox.Clear()
+                    $OutputTextbox.AppendText("Account Enable action canceled") 
+                }
+    
+            } catch { OutError }
+        }
     }
 }
+
+
+Function Passneverexp {
+        
+    if ($AccountsCombobox.SelectedItem -eq $null) {
+        $OutputTextbox.Clear()
+        $OutputTextbox.AppendText("No User Account Selected") 
+    }
     
+    Else {
+        if((Get-ADUser $AccountsCombobox.SelectedItem -Properties *).PasswordNeverExpires -eq $false ){
+
+            Try {
+                $OutputTextbox.Clear()
+                $userAccount = $AccountsCombobox.Text.ToString()
+                set-aduser $AccountsCombobox.SelectedItem -PasswordNeverExpires:$true 
+                $OutputTextbox.AppendText("$userAccount``s account is set to 'Password Never Expires'")
+                
+            } catch { OutError }
+        }else{
+            Try {
+                $OutputTextbox.Clear()
+                $userAccount = $AccountsCombobox.Text.ToString()
+                set-aduser $AccountsCombobox.SelectedItem -PasswordNeverExpires:$false 
+                $OutputTextbox.AppendText("$userAccount's Password is now expired and must be changed")
+            } catch { OutError }
+        }
+    }
+}
+
+Function PasscantChange {
+        
+    if ($AccountsCombobox.SelectedItem -eq $null) {
+        $OutputTextbox.Clear()
+        $OutputTextbox.AppendText("No User Account Selected") 
+    }
+    
+    Else {
+        if((Get-ADUser $AccountsCombobox.SelectedItem -Properties *).CannotChangePassword -eq $false ){
+
+            Try {
+                $OutputTextbox.Clear()
+                $userAccount = $AccountsCombobox.Text.ToString()
+                set-aduser $AccountsCombobox.SelectedItem -CannotChangePassword:$true
+                $OutputTextbox.AppendText("$userAccount's account is set to 'Cannot Change Password'")
+                
+            } catch { OutError }
+        }else{
+            Try {
+                $OutputTextbox.Clear()
+                $userAccount = $AccountsCombobox.Text.ToString()
+                set-aduser $AccountsCombobox.SelectedItem -CannotChangePassword:$false 
+                $OutputTextbox.AppendText("$userAccount's Password can now be changed by user")
+            } catch { OutError }
+        }
+    }
+}
+
 
 Function Accountinfo {
         
@@ -372,32 +450,27 @@ $MenuHelp  = New-Object System.Windows.Forms.ToolStripMenuItem
 #===========================================================
     
 $AccountsGroupBox = New-Object System.Windows.Forms.GroupBox
-$AccountsGroupBox.location = New-Object System.Drawing.Point(20,40)
-$AccountsGroupBox.Size = New-Object System.Drawing.Size(409, 167)
+$AccountsGroupBox.location = "20,40"
+$AccountsGroupBox.Size = "409, 167"
 $AccountsGroupBox.Text = "User Account Actions"
 $AccountsGroupBox.ForeColor = $GroupTextColor
 
-$AccountsLabel = New-Object System.Windows.Forms.Label
-$AccountsLabel.location = New-Object System.Drawing.Point(7, 17)
-$AccountsLabel.Text = "Select User Account:"
-$AccountsLabel.Width = 110
-    
 $AccountsCombobox = New-Object System.Windows.Forms.ComboBox 
-$AccountsCombobox.location = New-Object System.Drawing.Point(120, 14)
+$AccountsCombobox.location = "7, 14"
 $AccountsCombobox.DropDownStyle = "DropDown"
-$AccountsCombobox.Width = 280
+$AccountsCombobox.Width = 394
 $AccountsCombobox.FlatStyle = $Style
 ForEach ($user in $ADusers) {[void]$AccountsCombobox.Items.Add($user)}
 $AccountsCombobox.AutoCompleteSource = "CustomSource" 
 $AccountsCombobox.AutoCompleteMode = "SuggestAppend"
 $ADusers | % {[void]$AccountsCombobox.AutoCompleteCustomSource.Add($_)}
-    
+
 $ButtonX = 35
 $ButtonY = 128
     
 $ResetPasswordButton = New-Object System.Windows.Forms.Button
-$ResetPasswordButton.location = New-Object System.Drawing.Point(7, 42)
-$ResetPasswordButton.Size = New-Object System.Drawing.Size($ButtonY, $ButtonX)
+$ResetPasswordButton.location = "7, 42"
+$ResetPasswordButton.Size = "$ButtonY, $ButtonX"
 $ResetPasswordButton.Text = "Reset Password"
 $ResetPasswordButton.FlatStyle = $Style 
 $ResetPasswordButton.ForeColor = $ButtionForeColor 
@@ -406,9 +479,9 @@ $ResetPasswordButton.FlatAppearance.BorderSize = 0
 $ResetPasswordButton.add_Click({ ResetPass })
     
 $UnlockButton = New-Object System.Windows.Forms.Button
-$UnlockButton.location = New-Object System.Drawing.Point(140, 42)
-$UnlockButton.Size = New-Object System.Drawing.Size($ButtonY, $ButtonX)
-$UnlockButton.Text = "Unlock Account"
+$UnlockButton.location = "140, 42"
+$UnlockButton.Size = "$ButtonY, $ButtonX"
+$UnlockButton.Text = "Unlock"
 $UnlockButton.FlatStyle = $Style 
 $UnlockButton.ForeColor = $ButtionForeColor 
 $UnlockButton.BackColor = $ButtionBackColor
@@ -416,14 +489,14 @@ $UnlockButton.FlatAppearance.BorderSize = 0
 $UnlockButton.add_Click({ Unlock })
     
 $DisableButton = New-Object System.Windows.Forms.Button
-$DisableButton.location = New-Object System.Drawing.Point(273, 42)
-$DisableButton.Size = New-Object System.Drawing.Size($ButtonY, $ButtonX)
+$DisableButton.location = "273, 42"
+$DisableButton.Size = "$ButtonY, $ButtonX"
 $DisableButton.Text = "Disable/Enable Account"
 $DisableButton.FlatStyle = $Style 
 $DisableButton.ForeColor = $ButtionForeColor 
 $DisableButton.BackColor = $ButtionBackColor
 $DisableButton.FlatAppearance.BorderSize = 0
-$DisableButton.add_Click({ Disable })
+$DisableButton.add_Click({ Disable-Enable })
  
 <# Move this to reset password output
 $NextLoginCheckBox = New-Object System.Windows.Forms.CheckBox
@@ -434,9 +507,9 @@ $NextLoginCheckBox.Checked = "Checked"
 #>
     
 $NewButton = New-Object System.Windows.Forms.Button
-$NewButton.location = New-Object System.Drawing.Point(7, 82)
-$NewButton.Size = New-Object System.Drawing.Size($ButtonY, $ButtonX)
-$NewButton.Text = "New User Account"
+$NewButton.location = "7, 82"
+$NewButton.Size = "$ButtonY, $ButtonX"
+$NewButton.Text = "New User"
 $NewButton.FlatStyle = $Style 
 $NewButton.ForeColor = $ButtionForeColor 
 $NewButton.BackColor = $ButtionBackColor
@@ -444,28 +517,28 @@ $NewButton.FlatAppearance.BorderSize = 0
 $NewButton.add_Click({  })
 
 $PasNvrExpBut = New-Object System.Windows.Forms.Button
-$PasNvrExpBut.location = New-Object System.Drawing.Point(140, 82)
-$PasNvrExpBut.Size = New-Object System.Drawing.Size($ButtonY, $ButtonX)
-$PasNvrExpBut.Text = "Set Password to never Expires"
+$PasNvrExpBut.location = "140, 82"
+$PasNvrExpBut.Size = "$ButtonY, $ButtonX"
+$PasNvrExpBut.Text = "Password never Expires"
 $PasNvrExpBut.FlatStyle = $Style 
 $PasNvrExpBut.ForeColor = $ButtionForeColor 
 $PasNvrExpBut.BackColor = $ButtionBackColor
 $PasNvrExpBut.FlatAppearance.BorderSize = 0
-$PasNvrExpBut.add_Click({ SetPasneverExpires })
+$PasNvrExpBut.add_Click({ Passneverexp })
 
 $PasNoChangeBut = New-Object System.Windows.Forms.Button
-$PasNoChangeBut.location = New-Object System.Drawing.Point(273, 82)
-$PasNoChangeBut.Size = New-Object System.Drawing.Size($ButtonY, $ButtonX)
-$PasNoChangeBut.Text = "Set user cannot change Password"
+$PasNoChangeBut.location = "273, 82"
+$PasNoChangeBut.Size = "$ButtonY, $ButtonX"
+$PasNoChangeBut.Text = "Cannot change Password"
 $PasNoChangeBut.FlatStyle = $Style 
 $PasNoChangeBut.ForeColor = $ButtionForeColor 
 $PasNoChangeBut.BackColor = $ButtionBackColor
 $PasNoChangeBut.FlatAppearance.BorderSize = 0
-$PasNoChangeBut.add_Click({  })
+$PasNoChangeBut.add_Click({ PasscantChange })
 
 $MoveToOUBut = New-Object System.Windows.Forms.Button
-$MoveToOUBut.location = New-Object System.Drawing.Point(7, 122)
-$MoveToOUBut.Size = New-Object System.Drawing.Size($ButtonY, $ButtonX)
+$MoveToOUBut.location = "7, 122"
+$MoveToOUBut.Size = "$ButtonY, $ButtonX"
 $MoveToOUBut.Text = "Move to OU"
 $MoveToOUBut.FlatStyle = $Style 
 $MoveToOUBut.ForeColor = $ButtionForeColor 
@@ -474,9 +547,9 @@ $MoveToOUBut.FlatAppearance.BorderSize = 0
 $MoveToOUBut.add_Click({  })
 
 $AllUserinfo = New-Object System.Windows.Forms.Button
-$AllUserinfo.location = New-Object System.Drawing.Point(140, 122)
-$AllUserinfo.Size = New-Object System.Drawing.Size($ButtonY, $ButtonX)
-$AllUserinfo.Text = "Get all user info"
+$AllUserinfo.location = "140, 122"
+$AllUserinfo.Size = "$ButtonY, $ButtonX"
+$AllUserinfo.Text = "All users info"
 $AllUserinfo.FlatStyle = $Style 
 $AllUserinfo.ForeColor = $ButtionForeColor 
 $AllUserinfo.BackColor = $ButtionBackColor
@@ -484,8 +557,8 @@ $AllUserinfo.FlatAppearance.BorderSize = 0
 $AllUserinfo.add_Click({ Allusersinfo })
     
 $AccountinfoButton = New-Object System.Windows.Forms.Button
-$AccountinfoButton.location = New-Object System.Drawing.Point(273, 122)
-$AccountinfoButton.Size = New-Object System.Drawing.Size($ButtonY, $ButtonX)
+$AccountinfoButton.location = "273, 122"
+$AccountinfoButton.Size = "$ButtonY, $ButtonX"
 $AccountinfoButton.Text = "Account info"
 $AccountinfoButton.FlatStyle = $Style 
 $AccountinfoButton.ForeColor = $ButtionForeColor 
@@ -506,13 +579,13 @@ $CopyCheckBox.Checked = "Checked"
 #===========================================================
     
 $GroupGroupBox = New-Object System.Windows.Forms.GroupBox
-$GroupGroupBox.location = New-Object System.Drawing.Point(20, 220)
-$GroupGroupBox.Size = New-Object System.Drawing.Size(409, 127)
+$GroupGroupBox.location = "20, 220"
+$GroupGroupBox.Size = "409, 167"
 $GroupGroupBox.Text = "Select Group"
 $GroupGroupBox.ForeColor = $GroupTextColor
     
 $GroupCombobox = New-Object System.Windows.Forms.ComboBox 
-$GroupCombobox.location = New-Object System.Drawing.Point(7, 14)
+$GroupCombobox.location = "7, 14"
 $GroupCombobox.Width = 394
 $GroupCombobox.DropDownStyle = "DropDown"
 $GroupCombobox.FlatStyle = $Style 
@@ -525,9 +598,9 @@ $GroupButtonX = 35
 $GroupButtonY = 193
     
 $AddButton = New-Object System.Windows.Forms.Button
-$AddButton.location = New-Object System.Drawing.Point(7, 42)
-$AddButton.Size = New-Object System.Drawing.Size($GroupButtonY, $GroupButtonX)
-$AddButton.Text = "Add Members to Group"
+$AddButton.location = "7, 42"
+$AddButton.Size = "$GroupButtonY, $GroupButtonX"
+$AddButton.Text = "Add Members"
 $AddButton.FlatStyle = $Style 
 $AddButton.ForeColor = $ButtionForeColor 
 $AddButton.BackColor = $ButtionBackColor
@@ -535,48 +608,87 @@ $AddButton.FlatAppearance.BorderSize = 0
 $AddButton.add_Click({ AddMember })
     
 $RemoveButton = New-Object System.Windows.Forms.Button
-$RemoveButton.location = New-Object System.Drawing.Point(207, 42)
-$RemoveButton.Size = New-Object System.Drawing.Size($GroupButtonY, $GroupButtonX)
-$RemoveButton.Text = "Remove Members from Group"
+$RemoveButton.location = "207, 42"
+$RemoveButton.Size = "$GroupButtonY, $GroupButtonX"
+$RemoveButton.Text = "Remove Members"
 $RemoveButton.FlatStyle = $Style 
 $RemoveButton.ForeColor = $ButtionForeColor 
 $RemoveButton.BackColor = $ButtionBackColor
 $RemoveButton.FlatAppearance.BorderSize = 0
 $RemoveButton.add_Click({ RemoveMember })
 
-$InfoGroup = New-Object System.Windows.Forms.Button
-$InfoGroup.location = New-Object System.Drawing.Point(7, 82)
-$InfoGroup.Size = New-Object System.Drawing.Size($GroupButtonY, $GroupButtonX)
-$InfoGroup.Text = "Show Group info"
-$InfoGroup.FlatStyle = $Style 
-$InfoGroup.ForeColor = $ButtionForeColor 
-$InfoGroup.BackColor = $ButtionBackColor
-$InfoGroup.FlatAppearance.BorderSize = 0
-$InfoGroup.add_Click({ GroupInfo })
+$NewGroup = New-Object System.Windows.Forms.Button
+$NewGroup.location = "7, 82"
+$NewGroup.Size = "$GroupButtonY, $GroupButtonX"
+$NewGroup.Text = "New Group"
+$NewGroup.FlatStyle = $Style 
+$NewGroup.ForeColor = $ButtionForeColor 
+$NewGroup.BackColor = $ButtionBackColor
+$NewGroup.FlatAppearance.BorderSize = 0
+$NewGroup.add_Click({  })
+
+$DelGroup = New-Object System.Windows.Forms.Button
+$DelGroup.location = "207, 82"
+$DelGroup.Size = "$GroupButtonY, $GroupButtonX"
+$DelGroup.Text = "Delete Group"
+$DelGroup.FlatStyle = $Style 
+$DelGroup.ForeColor = $ButtionForeColor 
+$DelGroup.BackColor = $ButtionBackColor
+$DelGroup.FlatAppearance.BorderSize = 0
+$DelGroup.add_Click({  })
     
 $AllGroups = New-Object System.Windows.Forms.Button
-$AllGroups.location = New-Object System.Drawing.Point(207, 82)
-$AllGroups.Size = New-Object System.Drawing.Size($GroupButtonY, $GroupButtonX)
-$AllGroups.Text = "Show all Groups and Members"
+$AllGroups.location = "7, 122"
+$AllGroups.Size = "$GroupButtonY, $GroupButtonX"
+$AllGroups.Text = "All Groups and Members"
 $AllGroups.FlatStyle = $Style 
 $AllGroups.ForeColor = $ButtionForeColor 
 $AllGroups.BackColor = $ButtionBackColor
 $AllGroups.FlatAppearance.BorderSize = 0
 $AllGroups.add_Click({ ShowallGroups })
+
+$InfoGroup = New-Object System.Windows.Forms.Button
+$InfoGroup.location = "207, 122"
+$InfoGroup.Size = "$GroupButtonY, $GroupButtonX"
+$InfoGroup.Text = "Group info"
+$InfoGroup.FlatStyle = $Style 
+$InfoGroup.ForeColor = $ButtionForeColor 
+$InfoGroup.BackColor = $ButtionBackColor
+$InfoGroup.FlatAppearance.BorderSize = 0
+$InfoGroup.add_Click({ GroupInfo })
+
+# CPU GroupBox
+#===========================================================
+    
+$CPUGroupBox = New-Object System.Windows.Forms.GroupBox
+$CPUGroupBox.location = "20, 400"
+$CPUGroupBox.Size = "409, 127"
+$CPUGroupBox.Text = "Select Comouter"
+$CPUGroupBox.ForeColor = $GroupTextColor
+    
+$CPUCombobox = New-Object System.Windows.Forms.ComboBox 
+$CPUCombobox.location = "7, 14"
+$CPUCombobox.Width = 394
+$CPUCombobox.DropDownStyle = "DropDown"
+$CPUCombobox.FlatStyle = $Style 
+ForEach ($CPU in $Computers) {[void]$CPUCombobox.Items.Add($CPU)}
+$CPUCombobox.AutoCompleteSource = "CustomSource" 
+$CPUCombobox.AutoCompleteMode = "SuggestAppend"
+$Computers | % {[void]$CPUCombobox.AutoCompleteCustomSource.Add($_)}
     
 # Output GroupBox
 #===========================================================
     
 $OutputGroupBox = New-Object System.Windows.Forms.GroupBox
-$OutputGroupBox.location = New-Object System.Drawing.Point(450,40)
-$OutputGroupBox.Size = New-Object System.Drawing.Size(609, 530)
+$OutputGroupBox.location = "450,40"
+$OutputGroupBox.Size = "609, 530"
 $OutputGroupBox.Text = "Output"
 $OutputGroupBox.ForeColor = $GroupTextColor
 $OutputGroupBox.Anchor = "Top, Bottom, Left, Right"
     
 $OutputTextbox = New-Object System.Windows.Forms.RichTextBox
-$OutputTextbox.location = New-Object System.Drawing.Point(7, 14)
-$OutputTextBox.Size = New-Object System.Drawing.Size(595, 507)
+$OutputTextbox.location = "7, 14"
+$OutputTextBox.Size = "595, 507"
 $OutputTextbox.ScrollBars = "both"
 $OutputTextbox.Multiline = $true
 $OutputTextBox.BackColor = "White"
@@ -593,9 +705,10 @@ $OutputTextbox.Cursor = "IBeam"
 $AccountsGroupBox.Controls.AddRange(@($AccountsLabel, $AccountsCombobox, $ResetPasswordButton,
 $UnlockButton, $DisableButton, $PasNoChangeBut, $PasNvrExpBut, $NewButton, $MoveToOUBut,$AllUserinfo, $AccountinfoButton ))
 
-$GroupGroupBox.Controls.AddRange(@( $GroupCombobox, $AddButton, $RemoveButton, $InfoGroup, $AllGroups  ))
+$GroupGroupBox.Controls.AddRange(@( $GroupCombobox, $AddButton, $RemoveButton, $NewGroup, $DelGroup, $InfoGroup, $AllGroups  ))
+$CPUGroupBox.Controls.AddRange(@( $CPUCombobox ))
 $OutputGroupBox.Controls.AddRange(@( $OutputTextbox ))
-$Form.controls.AddRange(@($Menu, $AccountsGroupBox ,$GroupGroupBox ,$ComputersGroupBox  ,$ExportGroupBox, $OutputGroupBox ))
+$Form.controls.AddRange(@($Menu, $AccountsGroupBox ,$GroupGroupBox ,$ComputersGroupBox  ,$ExportGroupBox, $OutputGroupBox, $CPUGroupBox ))
 [void]$Form.ShowDialog()
 } 
 
