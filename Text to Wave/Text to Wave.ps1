@@ -92,17 +92,6 @@ $MenuFile  = New-Object System.Windows.Forms.ToolStripMenuItem
         $menuExit.Add_Click({ $Form.close() })
 [void]$MenuFile.DropDownItems.Add($MenuExit)
 
-
-$MenuVoices  = New-Object System.Windows.Forms.ToolStripMenuItem
-    $MenuVoices.Text = "&Install"
-    [void]$Menu.Items.Add($MenuVoices)
-
-        $InstallVoices  = New-Object System.Windows.Forms.ToolStripMenuItem
-        $InstallVoices.Text = "&Install Other Voices"
-        $InstallVoices.Add_Click({  })
-[void]$MenuVoices.DropDownItems.Add($InstallVoices)
-
-
 $MenuHelp  = New-Object System.Windows.Forms.ToolStripMenuItem
     $MenuHelp.Text = "&Help"
     [void]$Menu.Items.Add($MenuHelp)
