@@ -1,8 +1,8 @@
-<#
+﻿<#
 .SYNOPSIS
   Text to voice app
 .DESCRIPTION
-  A GUI for windows speechsynthesis  
+  A GUI for window speechsynthesis  
 .NOTES
   Author Theo bird
 #>
@@ -208,8 +208,8 @@ Function SaveSound {
 }
 
 Function EnableEvaMark { 
-  
-  if (-not(Get-WmiObject -Class win32_operatingsystem).version.remove(2) -eq 10 ) { 
+
+    if (-not(Get-WmiObject -Class win32_operatingsystem).version.remove(2) -eq 10 ) { 
     [System.Windows.Forms.MessageBox]::Show("$OS,    Warning:") 
   }
   else {
@@ -218,6 +218,9 @@ Function EnableEvaMark {
     $Answer = $UserPrompt.popup($Message, 0, "Enable system Voices", 4)
 
     If ($Answer -eq 6) {
+      
+      If ((Test-Path $env:SystemDrive\Temp -ErrorAction Stop) -eq $false)  { New-Item -Path $env:SystemDrive\Temp -Type Directory }
+        
       New-Item -Value $eva -Path $env:SystemDrive\Temp\Eva.reg
       New-Item -Value $Mark -Path $env:SystemDrive\Temp\Mark.reg
       Invoke-Item $env:SystemDrive\Temp\Eva.reg 
