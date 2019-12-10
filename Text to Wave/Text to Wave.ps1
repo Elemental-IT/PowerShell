@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
   Text to voice app
 .DESCRIPTION
@@ -16,12 +16,10 @@ $speak = New-Object System.Speech.Synthesis.SpeechSynthesizer
 Add-Type -AssemblyName System.Windows.Forms
 [System.Windows.Forms.Application]::EnableVisualStyles()
 
-# VariableS
+# Variables
 #===========================================================
 
-$style = "flat"
-$FormBackColor = "DodgerBlue"
-$ButtionBackColor = "Aqua"
+$Admin = [bool](([System.Security.Principal.WindowsIdentity]::GetCurrent()).groups -match "S-1-5-32-544")
 
 $About = @'
   Text to Wave
@@ -31,7 +29,6 @@ $About = @'
   Author: Theo bird (Bedlem55)
     
 '@
-
 
 $Eva = @'
 Windows Registry Editor Version 5.00
@@ -152,17 +149,25 @@ Windows Registry Editor Version 5.00
 '@
 
 $Message = @'
-Enable Eva and Mark Voices? 
+Enable Eva and Mark system voices? 
 
-You will need to restart this after enabing 
-
-Warning: this is modify the system registry.
+Warning: this will modify the system registry.
 '@
 
 $OS = @'
 OS does not meet requirements:
 
-Windows 10 or Server 2016 and higher.
+Windows 10 or Server 2016 and higher is required.
+'@
+
+$AdminMeg = @'
+Requires elevation to enable. 
+
+Run text to wave as administrator 
+'@
+
+$Restart = @'
+Restart required, restart computer now?
 '@
 
 # Base Form
@@ -171,7 +176,7 @@ Windows 10 or Server 2016 and higher.
 Function PlaySound {
 
   if ($null -eq $SelectVoiceCB.SelectedItem) {
-    [System.Windows.Forms.MessageBox]::Show("No voice selected", "    Warning:") 
+    [System.Windows.Forms.MessageBox]::Show("No voice selected", "Warning:",0,48) 
   }
   Else {
     $speak.SetOutputToDefaultAudioDevice() ; 
@@ -182,10 +187,9 @@ Function PlaySound {
   } 
 }
 
-
 Function SaveSound {
   if ($null -eq $SelectVoiceCB.SelectedItem) {
-    [System.Windows.Forms.MessageBox]::Show("No voice selected", "    Warning:") 
+    [System.Windows.Forms.MessageBox]::Show("No voice selected", "Warning:",0,48) 
   }
   else {
     $SaveChooser = New-Object -TypeName System.Windows.Forms.SaveFileDialog
@@ -207,32 +211,34 @@ Function SaveSound {
   }
 }
 
-Function EnableEvaMark { 
+Function EnableMarkandEva { 
 
-    if (-not(Get-WmiObject -Class win32_operatingsystem).version.remove(2) -eq 10 ) { 
-    [System.Windows.Forms.MessageBox]::Show("$OS,    Warning:") 
+  if (-not(Get-WmiObject -Class win32_operatingsystem).version.remove(2) -eq 10 ) { 
+    [System.Windows.Forms.MessageBox]::Show("$OS","Warning:",0,48) 
   }
+
   else {
+    if ($Admin -eq $true) {
 
     $UserPrompt = new-object -comobject wscript.shell
     $Answer = $UserPrompt.popup($Message, 0, "Enable system Voices", 4)
 
-    If ($Answer -eq 6) {
-      
-      If ((Test-Path $env:SystemDrive\Temp -ErrorAction Stop) -eq $false)  { New-Item -Path $env:SystemDrive\Temp -Type Directory }
-        
-      New-Item -Value $eva -Path $env:SystemDrive\Temp\Eva.reg
-      New-Item -Value $Mark -Path $env:SystemDrive\Temp\Mark.reg
-      Invoke-Item $env:SystemDrive\Temp\Eva.reg 
-      Invoke-Item $env:SystemDrive\Temp\Mark.reg
-    }
-    else { $null }
+      If ($Answer -eq 6) {
+        New-Item -Value $eva -Path $env:SystemDrive\Eva.reg
+        New-Item -Value $Mark -Path $env:SystemDrive\Mark.reg
+        Start-Process regedit.exe -ArgumentList  /s, $env:SystemDrive\Eva.reg -Wait  
+        Start-Process regedit.exe -ArgumentList  /s, $env:SystemDrive\Mark.reg -Wait
+        Remove-Item $env:SystemDrive\Mark.reg -Force
+        Remove-Item $env:SystemDrive\Eva.reg  -Force
+
+        $UserPrompt = new-object -comobject wscript.shell
+        $Answer = $UserPrompt.popup($Restart, 0, "Restart prompt", 4)
+          If ($Answer -eq 6) { Restart-Computer -Force }
+
+      } 
+    }   Else { [System.Windows.Forms.MessageBox]::Show("$AdminMeg","Warning:",0,48) } 
   }
-
 }
-
-
-
 
 # Base Form
 #==========================================
@@ -241,7 +247,6 @@ $Form = New-Object system.Windows.Forms.Form
 $Form.ClientSize = '798,525'
 $Form.MinimumSize = '815,570'
 $Form.text = "Text to Wave"
-$Form.BackColor = $FormBackColor
 $Form.ShowIcon = $false
 $Form.TopMost = $false
 
@@ -265,10 +270,9 @@ $MenuVoices.Text = "&Voice"
 [void]$Menu.Items.Add($MenuVoices)
 
 $InstallVoices = New-Object System.Windows.Forms.ToolStripMenuItem
-$InstallVoices.Text = "&Enable Eva and Mark"
-$InstallVoices.Add_Click( { EnableEvaMark })
+$InstallVoices.Text = "&Enable MarkandEva"
+$InstallVoices.Add_Click( { EnableMarkandEva })
 [void]$MenuVoices.DropDownItems.Add($InstallVoices)
-
 
 $MenuHelp = New-Object System.Windows.Forms.ToolStripMenuItem
 $MenuHelp.Text = "&Help"
@@ -276,7 +280,7 @@ $MenuHelp.Text = "&Help"
 
 $MenuAbout = New-Object System.Windows.Forms.ToolStripMenuItem
 $MenuAbout.Text = "&About"
-$MenuAbout.Add_Click( { [System.Windows.Forms.MessageBox]::Show("$About", "    About") })
+$MenuAbout.Add_Click( { [System.Windows.Forms.MessageBox]::Show("$About", "About",0,64) })
 [void]$MenuHelp.DropDownItems.Add($MenuAbout)
 
 $SpeakButtion = New-Object system.Windows.Forms.Button
@@ -284,9 +288,6 @@ $SpeakButtion.location = "660, 401"
 $SpeakButtion.Size = "127, 43"
 $SpeakButtion.Anchor = "Bottom"
 $SpeakButtion.text = "Play"
-$SpeakButtion.BackColor = $ButtionBackColor
-$SpeakButtion.FlatStyle = $style
-$SpeakButtion.FlatAppearance.BorderSize = '0'
 $SpeakButtion.Font = 'Microsoft Sans Serif,10'
 $SpeakButtion.add_Click( { PlaySound })
 
@@ -295,9 +296,6 @@ $SaveButtion.location = "660, 456"
 $SaveButtion.Size = "127, 55"
 $SaveButtion.Anchor = "Bottom"
 $SaveButtion.text = "Save"
-$SaveButtion.BackColor = $ButtionBackColor
-$SaveButtion.FlatStyle = $style
-$SaveButtion.FlatAppearance.BorderSize = '0'
 $SaveButtion.Font = 'Microsoft Sans Serif,10'
 $SaveButtion.add_Click( { SaveSound })
 
@@ -308,8 +306,7 @@ $TextGB = New-Object system.Windows.Forms.Groupbox
 $TextGB.Anchor = "Top, Bottom, Left, Right"
 $TextGB.location = "10, 35"
 $TextGB.Size = "775, 350"
-$TextGB.text = "Enter or Drag Text here"
-$TextGB.ForeColor = "white"
+$TextGB.text = "Enter or drag text here"
 
 $SpeakTextBox = New-Object System.Windows.Forms.RichTextBox
 $SpeakTextBox.location = "10, 15"
@@ -321,7 +318,6 @@ $speakTextbox.EnableAutoDragDrop = $true
 $SpeakTextBox.multiline = $true
 $SpeakTextBox.AcceptsTab = $true
 $SpeakTextBox.ScrollBars = "both"
-$SpeakTextBox.BorderStyle = "None"
 $SpeakTextBox.Font = 'Microsoft Sans Serif,10'
 $SpeakTextBox.Cursor = "IBeam"
 $TextGB.Controls.Add( $SpeakTextBox )
@@ -334,13 +330,11 @@ $SelectGB.location = "11, 395"
 $SelectGB.Size = "640, 50"
 $SelectGB.Anchor = "Bottom"
 $SelectGB.text = "Select Voice"
-$SelectGB.ForeColor = "white"
 
 $SelectVoiceCB = New-Object system.Windows.Forms.ComboBox
 $SelectVoiceCB.location = "11, 15"
 $SelectVoiceCB.Size = "618,24"
 $SelectVoiceCB.Text = $speak.Voice.Name
-$SelectVoiceCB.FlatStyle = $style
 $SelectVoiceCB.DropDownStyle = 'DropDownList'
 
 $SelectVoiceCB.Font = 'Microsoft Sans Serif,10'
@@ -358,7 +352,6 @@ $SpeedGB.location = "11, 450"
 $SpeedGB.Size = "310,62"
 $SpeedGB.Anchor = "Bottom"
 $SpeedGB.text = "Speed"
-$SpeedGB.ForeColor = "white"
 
 $Speed = New-Object Windows.Forms.TrackBar
 $Speed.Orientation = "Horizontal"
@@ -376,7 +369,6 @@ $VolumeGB.location = "340, 450"
 $VolumeGB.Size = "311,62"
 $VolumeGB.Anchor = "Bottom"
 $VolumeGB.text = "Volume"
-$VolumeGB.ForeColor = "white"
 
 $Volume = New-Object Windows.Forms.TrackBar
 $Volume.Orientation = "Horizontal"
