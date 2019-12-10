@@ -11,7 +11,7 @@
 #==========================================
 
 Add-Type -AssemblyName System.speech
-$speak = New-Object System.Speech.Synthesis.SpeechSynthesizer
+$Speak = New-Object System.Speech.Synthesis.SpeechSynthesizer
 
 Add-Type -AssemblyName System.Windows.Forms
 [System.Windows.Forms.Application]::EnableVisualStyles()
@@ -179,11 +179,11 @@ Function PlaySound {
     [System.Windows.Forms.MessageBox]::Show("No voice selected", "Warning:",0,48) 
   }
   Else {
-    $speak.SetOutputToDefaultAudioDevice() ; 
+    $Speak.SetOutputToDefaultAudioDevice() ; 
     $Speak.Rate = ($speed.Value)
     $Speak.Volume = $Volume.Value 
-    $speak.SelectVoice($SelectVoiceCB.Text) 
-    $speak.Speak($SpeakTextBox.Text)
+    $Speak.SelectVoice($SelectVoiceCB.Text) 
+    $Speak.Speak($SpeakTextBox.Text)
   } 
 }
 
