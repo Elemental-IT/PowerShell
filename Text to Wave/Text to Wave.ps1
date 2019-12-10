@@ -199,14 +199,14 @@ Function SaveSound {
     $Answer = $SaveChooser.ShowDialog(); $Answer
 
     if ( $Answer -eq "OK" ) {
-      $speak.SetOutputToDefaultAudioDevice() ; 
-      $Script:Speak.Rate = ($speed.Value)
+      $Speak.SetOutputToDefaultAudioDevice() ; 
+      $Speak.Rate = ($speed.Value)
       $Speak.Volume = $Volume.Value 
-      $speak.SelectVoice($SelectVoiceCB.Text) 
-      $speak.SetOutputToWaveFile($SaveChooser.Filename)
-      $speak.Speak($SpeakTextBox.Text)
-      $speak.SetOutputToNull()
-      $speak.SpeakAsyncCancelAll()
+      $Speak.SelectVoice($SelectVoiceCB.Text) 
+      $Speak.SetOutputToWaveFile($SaveChooser.Filename)
+      $Speak.Speak($SpeakTextBox.Text)
+      $Speak.SetOutputToNull()
+      $Speak.SpeakAsyncCancelAll()
     }
   }
 }
