@@ -1,3 +1,23 @@
+<#
+  .SYNOPSIS
+  Tool for service desk users to access then administer multiple 365 tenents without having to install 5 diffrent web browsers and attempts to make 365 administration easy.
+  
+  .DESCRIPTION
+  This tool keeps things as simple as possble for service desks users so no params for any functions, this is all done via out-gridview -passthru and write-host. 
+  Also creates csv credential "profiles" to easly connect to any 365 tenents managed by service desk without having to install anyother software.
+  These profiles are storted under $env:USERPROFILE\AppData\Roaming\365Connect\365Profiles where the password is encrypted by Get-Credential and conveted to string with ConvertFrom-SecureString.
+  This can only be used with the computer account and the user account that created the profile.
+      
+  .EXAMPLE
+  Connect-365_Profile - connects to a 365 tenant via profile created with New-365_Profile 
+  Invoke-365_Command - lists all actions that can be done via this tool
+    
+  .NOTES
+  - This requires windows .net for out-gridview and will not work with .net core (recommend WMF5.1 and window 8.1 or windows 10 or there server counter parts)
+  - Module msonline to required - this will check for module and try to install it
+  - works best when not synced with on-prem Active Directory 
+  #>
+
 # Office 365 Service desk Version 1.3
 # Written by: Theo Bird
 
@@ -18,26 +38,7 @@ if (-not (Get-InstalledModule -Name "MSonline")) {
 #Create Connect365 Script
 $Script_Path = "$env:USERPROFILE\AppData\Roaming\365Connect\Connect365.ps1" 
 $Script_Body = @' 
-<#
-  .SYNOPSIS
-  Tool for service desk users to access then administer multiple 365 tenents without having to install 5 diffrent web browsers and attempts to make 365 administration easy.
-  
-  .DESCRIPTION
-  This tool keeps things as simple as possble for service desks users so no params for any functions, this is all done via out-gridview -passthru and write-host. 
-  Also creates csv credential "profiles" to easly connect to any 365 tenents managed by service desk without having to install anyother software.
-  These profiles are storted under $env:USERPROFILE\AppData\Roaming\365Connect\365Profiles where the password is encrypted by Get-Credential and conveted to string with ConvertFrom-SecureString.
-  This can only be used with the computer account and the user account that created the profile.
-      
-  .EXAMPLE
-  Connect-365_Profile - connects to a 365 tenant via profile created with New-365_Profile 
-  Invoke-365_Command - lists all actions that can be done via this tool
-    
-  .NOTES
-  - This requires windows .net for out-gridview and will not work with .net core (recommend WMF5.1 and window 8.1 or windows 10 or there server counter parts)
-  - Module msonline to required - this will check for module and try to install it
-  - works best when not synced with on-prem Active Directory 
-  
-#>
+
 <#============================= Added Details above here =====================================#>
 #region
 # Empty variables to be populated with data from Connect-365_Profile
