@@ -59,6 +59,6 @@ kdcproxyname:s:
 username:s:$User
 "@
 
-New-Item -Path "$RDP_Folder\$Server.RDP"
-Add-Content "$RDP_Folder\$Server.RDP" -Value $Content
+New-Item -Path "$RDP_Folder\$Server.rdp"
+Add-Content "$RDP_Folder\$Server.rdp" -Value $Content
  }
