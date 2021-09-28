@@ -48,6 +48,9 @@ $Paths = @(
     "$env:SystemDrive\users\public\desktop\Excel 2016.lnk"
     "$env:SystemDrive\users\public\desktop\Outlook 2016.lnk"
     "$env:SystemDrive\users\public\desktop\Word 2016.lnk"
+    "$Env:ALLUSERSPROFILE\Microsoft\Windows\Start Menu\Programs\Excel 2016.lnk"
+    "$Env:ALLUSERSPROFILE\Microsoft\Windows\Start Menu\Programs\Outlook 2016.lnk"
+    "$Env:ALLUSERSPROFILE\Microsoft\Windows\Start Menu\Programs\Word 2016.lnk"
     "$env:SystemDrive\Program Files (x86)\Microsoft Office\Office16"
     "$env:SystemDrive\Program Files\Microsoft Office\Office16"
 
