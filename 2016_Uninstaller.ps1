@@ -1,4 +1,4 @@
-﻿<#
+<#
 
 .SYNOPSIS
 office 2016 installer
@@ -29,17 +29,38 @@ New-PSDrive -PSProvider registry -Root HKEY_CLASSES_ROOT -Name HKCR
 
 # Back up Reg 
 New-Item "$env:SystemDrive\RegBack" -ItemType Directory -Force
-reg export HKCR C:\RegBack\HKCR.Reg /y
-reg export HKCU C:\RegBack\HKCU.Reg /y
-reg export HKLM C:\RegBack\HKLM.Reg /y
-reg export HKU C:\RegBack\HKU.Reg /y
-reg export HKCC C:\RegBack\HKCC.Reg /y
 
-# Remove Microsoft Office folder
-$Path = "$env:SystemDrive\Program Files (x86)\Microsoft Office\Office16"
-if (Test-Path $Path) {Remove-Item $Path -Force -Recurse}
+$Export_paths = @(
 
-# Reg Keys
+    "$env:SystemDrive\RegBack\HKCR.Reg"
+    "$env:SystemDrive\RegBack\HKCU.Reg"
+    "$env:SystemDrive\RegBack\HKLM.Reg"
+    "$env:SystemDrive\RegBack\HKU.Reg"
+    "$env:SystemDrive\RegBack\HKCC.Reg"
+
+)
+
+Foreach ($Export in $Export_paths) { reg export HKLM $Export /y }
+
+# remove folders and shortcuts 
+$Paths = @(
+
+    "$env:SystemDrive\users\public\desktop\Excel 2016.lnk"
+    "$env:SystemDrive\users\public\desktop\Outlook 2016.lnk"
+    "$env:SystemDrive\users\public\desktop\Word 2016.lnk"
+    "$env:SystemDrive\Program Files (x86)\Microsoft Office\Office16"
+    "$env:SystemDrive\Program Files\Microsoft Office\Office16"
+
+)
+
+Foreach($Path in $Paths) { $test = Test-Path $Path
+
+    $test = Test-Path $Path
+    If ($test -eq $true) {Remove-Item $Path -Force -Recurse -Verbose}
+ 
+ }
+
+# remove Reg Keys
 $Reg = @( 
 
     # 32 Bit 
